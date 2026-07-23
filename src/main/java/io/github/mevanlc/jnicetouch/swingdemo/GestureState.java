@@ -6,7 +6,10 @@ import io.github.mevanlc.jnicetouch.MacTrackpadEvent;
 final class GestureState {
     static final double MIN_SCALE = 0.45;
     static final double MAX_SCALE = 2.8;
+    static final double IMAGE_MIN_SCALE = 0.05;
+    static final double IMAGE_MAX_SCALE = 64.0;
     private static final double MAX_PAN = 320.0;
+    private static final double IMAGE_MAX_PAN = 100_000.0;
 
     private double panX;
     private double panY;
@@ -20,13 +23,19 @@ final class GestureState {
     private double lastSwipeX;
     private double lastSwipeY;
     private int quickLookGeneration;
+    private boolean reverseScrollDeltas = true;
+    private double lastRawScrollX;
+    private double lastRawScrollY;
+    private double lastScreenScrollX;
+    private double lastScreenScrollY;
+    private boolean hasScrollSample;
+    private boolean imageMode;
 
     void apply(MacTrackpadEvent event) {
         sequenceId = event.sequenceId();
         lastKind = event.kind();
         switch (event.kind()) {
-            // AppKit reports scroll intent; direct object manipulation uses the opposite signs.
-            case SCROLL -> panBy(-event.deltaX(), -event.deltaY());
+            case SCROLL -> applyScroll(event);
             case MAGNIFY -> scaleBy(1.0 + event.magnification());
             case ROTATE -> rotateBy(event.rotationDegrees());
             case SWIPE -> {
@@ -49,13 +58,37 @@ final class GestureState {
         }
     }
 
+    private void applyScroll(MacTrackpadEvent event) {
+        double mapping = reverseScrollDeltas ? -1.0 : 1.0;
+        double stateDeltaX = mapping * event.deltaX();
+        double stateDeltaY = mapping * event.deltaY();
+        panBy(stateDeltaX, stateDeltaY);
+        lastRawScrollX = event.deltaX();
+        lastRawScrollY = event.deltaY();
+        lastScreenScrollX = stateDeltaX;
+        lastScreenScrollY = -stateDeltaY;
+        hasScrollSample = true;
+    }
+
+    void setReverseScrollDeltas(boolean reverseScrollDeltas) {
+        this.reverseScrollDeltas = reverseScrollDeltas;
+    }
+
     void panBy(double deltaX, double deltaY) {
-        panX = clamp(panX + deltaX, -MAX_PAN, MAX_PAN);
-        panY = clamp(panY + deltaY, -MAX_PAN, MAX_PAN);
+        double limit = imageMode ? IMAGE_MAX_PAN : MAX_PAN;
+        panX = clamp(panX + deltaX, -limit, limit);
+        panY = clamp(panY + deltaY, -limit, limit);
     }
 
     void scaleBy(double factor) {
-        scale = clamp(scale * Math.max(0.05, factor), MIN_SCALE, MAX_SCALE);
+        double minimum = imageMode ? IMAGE_MIN_SCALE : MIN_SCALE;
+        double maximum = imageMode ? IMAGE_MAX_SCALE : MAX_SCALE;
+        scale = clamp(scale * Math.max(0.05, factor), minimum, maximum);
+    }
+
+    void setImageMode(boolean imageMode) {
+        this.imageMode = imageMode;
+        reset();
     }
 
     void rotateBy(double degrees) {
@@ -75,6 +108,11 @@ final class GestureState {
         lastSwipeX = 0.0;
         lastSwipeY = 0.0;
         quickLookGeneration = 0;
+        lastRawScrollX = 0.0;
+        lastRawScrollY = 0.0;
+        lastScreenScrollX = 0.0;
+        lastScreenScrollY = 0.0;
+        hasScrollSample = false;
     }
 
     double panX() {
@@ -123,6 +161,30 @@ final class GestureState {
 
     int quickLookGeneration() {
         return quickLookGeneration;
+    }
+
+    boolean reverseScrollDeltas() {
+        return reverseScrollDeltas;
+    }
+
+    boolean hasScrollSample() {
+        return hasScrollSample;
+    }
+
+    double lastRawScrollX() {
+        return lastRawScrollX;
+    }
+
+    double lastRawScrollY() {
+        return lastRawScrollY;
+    }
+
+    double lastScreenScrollX() {
+        return lastScreenScrollX;
+    }
+
+    double lastScreenScrollY() {
+        return lastScreenScrollY;
     }
 
     private static double clamp(double value, double minimum, double maximum) {

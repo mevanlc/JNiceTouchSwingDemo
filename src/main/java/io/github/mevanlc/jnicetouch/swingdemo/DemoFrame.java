@@ -11,6 +11,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GradientPaint;
@@ -22,6 +23,9 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
+import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,11 +52,14 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.Timer;
 
 @SuppressWarnings("serial")
 final class DemoFrame extends JFrame {
     private static final long serialVersionUID = 1L;
+    private static final String DEFAULT_PLAYGROUND_HINT =
+            "custom target · native deltas own movement";
 
     private final JPanel root = new JPanel(new BorderLayout());
     private final GestureState gestureState = new GestureState();
@@ -63,22 +70,29 @@ final class DemoFrame extends JFrame {
     private final JLabel providerStatus = new JLabel("Starting native provider…");
     private final JLabel droppedStatus = new JLabel("Queue drops  —");
     private final JLabel eventCount = new JLabel("0 captured events");
+    private final JLabel playgroundHint = new JLabel(DEFAULT_PLAYGROUND_HINT);
     private final JToggleButton pauseLog = new JToggleButton("Pause log");
     private final JComboBox<HapticPerformanceTime> hapticTime =
             new JComboBox<>(HapticPerformanceTime.values());
     private final JButton genericHaptic = new JButton("Generic");
     private final JButton alignmentHaptic = new JButton("Alignment");
     private final JButton levelHaptic = new JButton("Level change");
+    private final JToggleButton scrollMapping = new JToggleButton("Mapping A · reversed", true);
+    private final JButton openImage = new JButton("Open image…");
+    private final JMenuItem clearImageMenu = new JMenuItem("Clear Image");
     private final Timer droppedTimer;
 
     private MacTrackpadProvider provider;
     private Subscription subscription;
+    private FileDialog imageDialog;
+    private SwingWorker<BufferedImage, Void> imageLoadWorker;
     private boolean shuttingDown;
     private long capturedEvents;
 
     DemoFrame() {
         super("JNiceTouch Swing Demo");
         AppIcon.install(this);
+        configureImageActions();
         setName("JNiceTouch Swing Demo");
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         setMinimumSize(new Dimension(980, 680));
@@ -196,18 +210,31 @@ final class DemoFrame extends JFrame {
         toolbar.setOpaque(false);
         JLabel title = new JLabel("Gesture playground");
         DemoTheme.title(title);
-        JLabel hint = new JLabel("custom target · native deltas own movement");
-        hint.setForeground(DemoTheme.TEXT_MUTED);
-        hint.setFont(hint.getFont().deriveFont(11f));
+        playgroundHint.setForeground(DemoTheme.TEXT_MUTED);
+        playgroundHint.setFont(playgroundHint.getFont().deriveFont(11f));
         JPanel labels = new JPanel(new GridLayout(0, 1, 0, 1));
         labels.setOpaque(false);
         labels.add(title);
-        labels.add(hint);
+        labels.add(playgroundHint);
         JButton reset = new JButton("Reset view");
         reset.setName("Reset playground");
         reset.addActionListener(event -> gestureCanvas.resetView());
+        scrollMapping.setName("Playground scroll mapping");
+        scrollMapping.setToolTipText(
+                "Switch immediately between reversed and raw AppKit scroll deltas");
+        scrollMapping.addActionListener(event -> {
+            boolean reversed = scrollMapping.isSelected();
+            gestureState.setReverseScrollDeltas(reversed);
+            scrollMapping.setText(reversed ? "Mapping A · reversed" : "Mapping B · raw");
+            gestureCanvas.repaint();
+        });
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        actions.setOpaque(false);
+        actions.add(scrollMapping);
+        actions.add(openImage);
+        actions.add(reset);
         toolbar.add(labels, BorderLayout.WEST);
-        toolbar.add(reset, BorderLayout.EAST);
+        toolbar.add(actions, BorderLayout.EAST);
 
         JPanel canvasBorder = new JPanel(new BorderLayout());
         canvasBorder.setBackground(DemoTheme.BACKGROUND);
@@ -361,18 +388,28 @@ final class DemoFrame extends JFrame {
         int shortcut = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
         JMenuBar bar = new JMenuBar();
         JMenu file = new JMenu("File");
+        JMenuItem openImageMenu = new JMenuItem("Open Image…");
+        openImageMenu.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, shortcut));
+        openImageMenu.addActionListener(event -> chooseSurfaceImage());
+        file.add(openImageMenu);
+        file.add(clearImageMenu);
+        file.addSeparator();
         JMenuItem close = new JMenuItem("Close");
         close.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, shortcut));
         close.addActionListener(event -> shutdown());
         file.add(close);
 
         JMenu view = new JMenu("View");
+        JMenuItem toggleMapping = new JMenuItem("Toggle Scroll Mapping");
+        toggleMapping.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcut));
+        toggleMapping.addActionListener(event -> scrollMapping.doClick());
         JMenuItem reset = new JMenuItem("Reset Playground");
         reset.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_0, shortcut));
         reset.addActionListener(event -> gestureCanvas.resetView());
         JMenuItem clear = new JMenuItem("Clear Event Log");
         clear.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_K, shortcut));
         clear.addActionListener(event -> clearEventLog());
+        view.add(toggleMapping);
         view.add(reset);
         view.add(clear);
 
@@ -388,6 +425,94 @@ final class DemoFrame extends JFrame {
         bar.add(view);
         bar.add(help);
         return bar;
+    }
+
+    private void configureImageActions() {
+        openImage.setName("Open playground image");
+        openImage.addActionListener(event -> chooseSurfaceImage());
+        clearImageMenu.setEnabled(false);
+        clearImageMenu.addActionListener(event -> clearSurfaceImage());
+    }
+
+    private void chooseSurfaceImage() {
+        if (imageDialog == null) {
+            Path downloads = Path.of(System.getProperty("user.home"), "Downloads");
+            imageDialog = new FileDialog(this, "Open playground image", FileDialog.LOAD);
+            imageDialog.setDirectory(downloads.toString());
+            imageDialog.setFilenameFilter((directory, name) -> isImageFilename(name));
+        }
+        imageDialog.setVisible(true);
+        if (imageDialog.getFile() != null) {
+            loadSurfaceImage(Path.of(imageDialog.getDirectory(), imageDialog.getFile()));
+        }
+    }
+
+    private static boolean isImageFilename(String name) {
+        String lowercase = name.toLowerCase(Locale.ROOT);
+        return lowercase.endsWith(".jpg")
+                || lowercase.endsWith(".jpeg")
+                || lowercase.endsWith(".png")
+                || lowercase.endsWith(".gif")
+                || lowercase.endsWith(".bmp")
+                || lowercase.endsWith(".wbmp");
+    }
+
+    private void loadSurfaceImage(Path path) {
+        openImage.setEnabled(false);
+        playgroundHint.setText("loading " + path.getFileName() + "…");
+        imageLoadWorker = new SwingWorker<>() {
+            @Override
+            protected BufferedImage doInBackground() throws Exception {
+                return SurfaceImageLoader.load(path);
+            }
+
+            @Override
+            protected void done() {
+                if (isCancelled() || shuttingDown) {
+                    return;
+                }
+                try {
+                    BufferedImage image = get();
+                    gestureCanvas.setSurfaceImage(image, path.getFileName().toString());
+                    clearImageMenu.setEnabled(true);
+                    playgroundHint.setText(String.format(
+                            Locale.ROOT,
+                            "%s · decoded %,d × %,d",
+                            path.getFileName(),
+                            image.getWidth(),
+                            image.getHeight()));
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    showImageError(path, exception);
+                } catch (ExecutionException exception) {
+                    showImageError(path, exception.getCause());
+                } finally {
+                    openImage.setEnabled(true);
+                    imageLoadWorker = null;
+                }
+            }
+        };
+        imageLoadWorker.execute();
+    }
+
+    private void clearSurfaceImage() {
+        if (imageLoadWorker != null) {
+            imageLoadWorker.cancel(true);
+            imageLoadWorker = null;
+        }
+        gestureCanvas.clearSurfaceImage();
+        playgroundHint.setText(DEFAULT_PLAYGROUND_HINT);
+        openImage.setEnabled(true);
+        clearImageMenu.setEnabled(false);
+    }
+
+    private void showImageError(Path path, Throwable exception) {
+        playgroundHint.setText(DEFAULT_PLAYGROUND_HINT);
+        JOptionPane.showMessageDialog(
+                this,
+                "Could not open " + path + ":\n" + exception.getMessage(),
+                "Image loading failed",
+                JOptionPane.ERROR_MESSAGE);
     }
 
     private void configureHapticButtons() {
@@ -531,6 +656,9 @@ final class DemoFrame extends JFrame {
         }
         shuttingDown = true;
         droppedTimer.stop();
+        if (imageLoadWorker != null) {
+            imageLoadWorker.cancel(true);
+        }
         if (subscription != null) {
             subscription.close();
         }

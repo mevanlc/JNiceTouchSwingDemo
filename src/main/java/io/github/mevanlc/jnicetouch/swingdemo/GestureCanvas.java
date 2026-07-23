@@ -14,6 +14,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.util.Locale;
 import javax.accessibility.AccessibleContext;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -25,12 +27,13 @@ import javax.swing.Timer;
 @SuppressWarnings("serial")
 final class GestureCanvas extends JComponent {
     private static final long serialVersionUID = 1L;
-    private static final int CARD_WIDTH = 270;
-    private static final int CARD_HEIGHT = 170;
+    private static final int CARD_WIDTH = 360;
+    private static final int CARD_HEIGHT = 230;
 
     private final GestureState state;
     private float quickLookAlpha;
     private final Timer overlayTimer;
+    private BufferedImage surfaceImage;
 
     GestureCanvas(GestureState state) {
         this.state = state;
@@ -74,6 +77,22 @@ final class GestureCanvas extends JComponent {
         repaint();
     }
 
+    void setSurfaceImage(BufferedImage image, String title) {
+        surfaceImage = image;
+        state.setImageMode(true);
+        getAccessibleContext().setAccessibleDescription(
+                "Interactive JNiceTouch gesture target displaying " + title);
+        repaint();
+    }
+
+    void clearSurfaceImage() {
+        surfaceImage = null;
+        state.setImageMode(false);
+        getAccessibleContext().setAccessibleDescription(
+                "Interactive target for JNiceTouch trackpad gestures");
+        repaint();
+    }
+
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
@@ -81,8 +100,12 @@ final class GestureCanvas extends JComponent {
         try {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             paintBackdrop(g);
-            paintCard(g);
-            paintInstructions(g);
+            if (surfaceImage == null) {
+                paintCard(g);
+                paintInstructions(g);
+            } else {
+                paintImage(g);
+            }
             paintQuickLookOverlay(g);
         } finally {
             g.dispose();
@@ -133,20 +156,53 @@ final class GestureCanvas extends JComponent {
         g.setStroke(new BasicStroke(1.2f));
         g.draw(card);
 
-        g.setColor(DemoTheme.TEXT);
-        g.setFont(displayFont(Font.BOLD, 24f));
-        g.drawString("JNiceTouch", -108, -35);
-        g.setColor(DemoTheme.ACCENT);
-        g.fillRoundRect(-108, -19, 82, 5, 5, 5);
-
-        g.setColor(new Color(0xD7E1EA));
-        g.setFont(displayFont(Font.PLAIN, 13f));
-        g.drawString(String.format("scale  %.2f×", state.scale()), -108, 17);
-        g.drawString(String.format("rotation  %+.1f°", state.rotationDegrees()), -108, 40);
-        g.drawString(String.format("pressure  %.2f  stage %d",
-                state.pressure(), state.pressureStage()), -108, 63);
+        paintCardText(g);
 
         g.setTransform(original);
+    }
+
+    private void paintImage(Graphics2D g) {
+        AffineTransform original = g.getTransform();
+        double fitScale = Math.min(
+                getWidth() / (double) surfaceImage.getWidth(),
+                getHeight() / (double) surfaceImage.getHeight());
+        g.translate(
+                getWidth() / 2.0 + state.panX(),
+                getHeight() / 2.0 - state.panY());
+        g.rotate(Math.toRadians(state.rotationDegrees()));
+        g.scale(fitScale * state.scale(), fitScale * state.scale());
+        g.setRenderingHint(
+                RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g.drawImage(
+                surfaceImage,
+                -surfaceImage.getWidth() / 2,
+                -surfaceImage.getHeight() / 2,
+                null);
+        g.setTransform(original);
+    }
+
+    private void paintCardText(Graphics2D g) {
+        int left = -CARD_WIDTH / 2 + 28;
+        int titleY = -50;
+        g.setFont(displayFont(Font.BOLD, 24f));
+        g.setColor(DemoTheme.TEXT);
+        g.drawString("JNiceTouch", left, titleY);
+        g.setColor(DemoTheme.ACCENT);
+        g.fillRoundRect(left, titleY + 13, 82, 5, 5, 5);
+
+        g.setColor(new Color(0xE2EBF1));
+        g.setFont(displayFont(Font.PLAIN, 12f));
+        g.drawString(String.format(
+                Locale.ROOT,
+                "scale %.2f×  ·  rotation %+.1f°",
+                state.scale(),
+                state.rotationDegrees()), left, titleY + 47);
+        g.drawString(String.format(
+                Locale.ROOT,
+                "pressure %.2f  ·  stage %d",
+                state.pressure(),
+                state.pressureStage()), left, titleY + 68);
     }
 
     private void paintInstructions(Graphics2D g) {
@@ -162,6 +218,20 @@ final class GestureCanvas extends JComponent {
             String sequence = "last " + state.lastKind() + "  ·  sequence " + state.sequenceId();
             g.setColor(DemoTheme.ACCENT);
             g.drawString(sequence, 18, 24);
+            if (state.lastKind() == io.github.mevanlc.jnicetouch.EventKind.SCROLL
+                    && state.hasScrollSample()) {
+                String mapping = state.reverseScrollDeltas() ? "A · reversed" : "B · raw";
+                String deltas = String.format(
+                        Locale.ROOT,
+                        "raw Δ %+.2f, %+.2f  →  screen Δ %+.2f, %+.2f  ·  mapping %s",
+                        state.lastRawScrollX(),
+                        state.lastRawScrollY(),
+                        state.lastScreenScrollX(),
+                        state.lastScreenScrollY(),
+                        mapping);
+                g.setColor(DemoTheme.TEXT_MUTED);
+                g.drawString(deltas, 18, 44);
+            }
         }
     }
 

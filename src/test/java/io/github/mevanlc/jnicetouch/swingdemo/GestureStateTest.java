@@ -39,6 +39,25 @@ public class GestureStateTest {
 
         assertEquals(state.panX(), 19.0);
         assertEquals(state.panY(), -11.5);
+        assertEquals(state.lastRawScrollX(), -19.0);
+        assertEquals(state.lastRawScrollY(), 11.5);
+        assertEquals(state.lastScreenScrollX(), 19.0);
+        assertEquals(state.lastScreenScrollY(), 11.5);
+    }
+
+    @Test
+    public void switchesToRawScrollMappingForImmediateComparison() {
+        GestureState state = new GestureState();
+        state.setReverseScrollDeltas(false);
+
+        state.apply(TestEvents.event(
+                EventKind.SCROLL, -19.0, 11.5, 0, 0, 0, 0, 0,
+                Set.of(), Set.of(), Set.of(), 27));
+
+        assertEquals(state.panX(), -19.0);
+        assertEquals(state.panY(), 11.5);
+        assertEquals(state.lastScreenScrollX(), -19.0);
+        assertEquals(state.lastScreenScrollY(), -11.5);
     }
 
     @Test
@@ -57,6 +76,19 @@ public class GestureStateTest {
         assertEquals(state.pressure(), 1.0);
         assertEquals(state.pressureStage(), 2);
         assertEquals(state.stageTransition(), 0.4);
+    }
+
+    @Test
+    public void givesImageSurfacesADeepZoomAndLargePanWorkspace() {
+        GestureState state = new GestureState();
+        state.setImageMode(true);
+
+        state.scaleBy(1_000);
+        state.panBy(1_000, -1_000);
+
+        assertEquals(state.scale(), GestureState.IMAGE_MAX_SCALE);
+        assertEquals(state.panX(), 1_000.0);
+        assertEquals(state.panY(), -1_000.0);
     }
 
     @Test

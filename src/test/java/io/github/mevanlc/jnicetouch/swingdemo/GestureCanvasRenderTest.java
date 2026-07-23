@@ -1,6 +1,6 @@
 package io.github.mevanlc.jnicetouch.swingdemo;
 
-import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertEquals;
 
 import io.github.mevanlc.jnicetouch.EventKind;
 import java.awt.Graphics2D;
@@ -17,6 +17,16 @@ public class GestureCanvasRenderTest {
             GestureState state = new GestureState();
             state.apply(TestEvents.event(EventKind.SMART_MAGNIFY));
             GestureCanvas canvas = new GestureCanvas(state);
+            BufferedImage surface = new BufferedImage(720, 430, BufferedImage.TYPE_INT_RGB);
+            Graphics2D surfaceGraphics = surface.createGraphics();
+            try {
+                surfaceGraphics.setColor(new java.awt.Color(0xD88A52));
+                surfaceGraphics.fillRect(0, 0, surface.getWidth(), surface.getHeight());
+            } finally {
+                surfaceGraphics.dispose();
+            }
+            canvas.setSurfaceImage(surface, "render-test.jpg");
+            assertEquals(state.scale(), 1.0);
             canvas.setSize(720, 430);
             Graphics2D graphics = image.createGraphics();
             try {
@@ -26,6 +36,7 @@ public class GestureCanvasRenderTest {
             }
         });
 
-        assertNotEquals(image.getRGB(360, 215), image.getRGB(5, 5));
+        assertEquals(image.getRGB(360, 215), new java.awt.Color(0xD88A52).getRGB());
+        assertEquals(image.getRGB(5, 5), new java.awt.Color(0xD88A52).getRGB());
     }
 }

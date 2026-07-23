@@ -13,6 +13,8 @@ The demo deliberately shows both sides of trackpad integration:
 - live capability state, pinned component targets, phases, momentum phases,
   sequence IDs, modifiers, flags, native window numbers, and queue drops
 - a bounded event table that makes EDT batch delivery directly observable
+- an image surface that can be opened from disk and manipulated with the same
+  native gestures
 
 ## Requirements
 
@@ -68,6 +70,20 @@ additional nudge, smart magnify toggles between normal and detail scale, pressur
 changes the force ring, and Quick Look briefly raises an overlay. The exact
 initial target is shown and remains pinned through the gesture and scroll
 momentum.
+
+The playground starts with mapping A, which reverses AppKit's scroll deltas for
+direct object movement. Use the mapping toggle or Command-R for an immediate A/B
+comparison with the raw deltas; switching mappings preserves the current pan,
+zoom, and rotation. The sample canvas shows each raw scroll vector beside the
+resulting screen-space movement.
+
+Use **Open image…** in the playground toolbar or press Command-O to replace the
+sample card with a JPEG, PNG, GIF, or BMP in the native macOS file picker. Image
+mode is an edge-to-edge workspace: reset fits the whole photo on screen, while
+pan, rotate, and zoom (up to 64×) operate on the unadorned image. Decoding runs
+off the EDT and preserves source detail up to 8192 pixels on the longest side;
+larger sources are subsampled while decoding. **File → Clear Image** restores the
+default surface.
 
 The playground also has keyboard equivalents so every important action remains
 available without a trackpad:
