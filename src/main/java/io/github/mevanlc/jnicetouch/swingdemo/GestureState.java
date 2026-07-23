@@ -25,7 +25,8 @@ final class GestureState {
         sequenceId = event.sequenceId();
         lastKind = event.kind();
         switch (event.kind()) {
-            case SCROLL -> panBy(event.deltaX(), event.deltaY());
+            // AppKit reports scroll intent; direct object manipulation uses the opposite signs.
+            case SCROLL -> panBy(-event.deltaX(), -event.deltaY());
             case MAGNIFY -> scaleBy(1.0 + event.magnification());
             case ROTATE -> rotateBy(event.rotationDegrees());
             case SWIPE -> {

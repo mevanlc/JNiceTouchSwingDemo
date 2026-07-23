@@ -62,11 +62,12 @@ The checked-in `appicon.svg` is the single icon source. Gradle renders it to
 
 ## Interaction guide
 
-Use two-finger scrolling over the playground to pan, pinch to scale, and rotate
-to turn the card. Swipe gives the card an additional nudge, smart magnify toggles
-between normal and detail scale, pressure changes the force ring, and Quick Look
-briefly raises an overlay. The exact initial target is shown and remains pinned
-through the gesture and scroll momentum.
+Use two-finger scrolling over the playground to directly pan the card with your
+fingers, pinch to scale, and rotate to turn it. Swipe gives the card an
+additional nudge, smart magnify toggles between normal and detail scale, pressure
+changes the force ring, and Quick Look briefly raises an overlay. The exact
+initial target is shown and remains pinned through the gesture and scroll
+momentum.
 
 The playground also has keyboard equivalents so every important action remains
 available without a trackpad:

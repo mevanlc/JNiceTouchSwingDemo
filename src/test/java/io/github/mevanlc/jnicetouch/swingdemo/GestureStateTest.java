@@ -21,12 +21,24 @@ public class GestureStateTest {
                 EventKind.ROTATE, 0, 0, 0, 37.5, 0, 0, 0,
                 Set.of(), Set.of(), Set.of(), 23));
 
-        assertEquals(state.panX(), 14.5);
-        assertEquals(state.panY(), -8.25);
+        assertEquals(state.panX(), -14.5);
+        assertEquals(state.panY(), 8.25);
         assertEquals(state.scale(), 1.5);
         assertEquals(state.rotationDegrees(), 37.5);
         assertEquals(state.sequenceId(), 23L);
         assertEquals(state.lastKind(), EventKind.ROTATE);
+    }
+
+    @Test
+    public void mapsScrollIntentToDirectManipulationOnBothAxes() {
+        GestureState state = new GestureState();
+
+        state.apply(TestEvents.event(
+                EventKind.SCROLL, -19.0, 11.5, 0, 0, 0, 0, 0,
+                Set.of(), Set.of(), Set.of(), 26));
+
+        assertEquals(state.panX(), 19.0);
+        assertEquals(state.panY(), -11.5);
     }
 
     @Test
