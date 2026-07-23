@@ -1,0 +1,73 @@
+# JNiceTouch Swing Demo
+
+An interactive Swing application and source example for every high-level
+capability exposed by [JNiceTouch](../JNiceTouch/README.md).
+
+The demo deliberately shows both sides of trackpad integration:
+
+- a custom gesture playground where native scroll, magnify, rotate, swipe,
+  smart-magnify, pressure, and Quick Look events manipulate a visible object
+- a standard Swing list where AWT continues to own scrolling while JNiceTouch
+  supplies phase and metadata without applying the delta a second time
+- haptic controls for Generic, Alignment, and Level Change feedback
+- live capability state, pinned component targets, phases, momentum phases,
+  sequence IDs, modifiers, flags, native window numbers, and queue drops
+- a bounded event table that makes EDT batch delivery directly observable
+
+## Requirements
+
+- macOS 12 or newer
+- JDK 22 or newer for development
+- Xcode Command Line Tools
+- the sibling checkout layout requested for this source example:
+
+```text
+JNiceTouch/
+JNiceTouchSwingDemo/
+```
+
+The Gradle composite build substitutes the local `../JNiceTouch` project for
+the declared `io.github.mevanlc:jnicetouch` dependency, so editing the library
+and rerunning the demo always uses the current source.
+
+## Run from source
+
+```text
+./gradlew run
+```
+
+The application plugin supplies `--enable-native-access=ALL-UNNAMED`; no IDE
+VM-option setup is required when launching through Gradle.
+
+## Test and package
+
+```text
+./gradlew test
+./gradlew packageMacApp
+./gradlew macDeployToApplications
+```
+
+`packageMacApp` uses the maintained `org.panteleyev.jpackageplugin` Gradle
+plugin to create a self-contained
+`build/jpackage-output/JNiceTouch Swing Demo.app`. The deployment task installs
+that bundle at `/Applications/JNiceTouch Swing Demo.app` with the required FFM
+native-access option embedded in its launcher configuration.
+
+## Interaction guide
+
+Use two-finger scrolling over the playground to pan, pinch to scale, and rotate
+to turn the card. Swipe gives the card an additional nudge, smart magnify toggles
+between normal and detail scale, pressure changes the force ring, and Quick Look
+briefly raises an overlay. The exact initial target is shown and remains pinned
+through the gesture and scroll momentum.
+
+The playground also has keyboard equivalents so every important action remains
+available without a trackpad:
+
+- Arrow keys: pan
+- `+` / `-`: zoom
+- `[` / `]`: rotate
+- `0`: reset
+
+Haptic feedback still requires compatible Apple hardware and may be suppressed
+by macOS when the user is not touching the trackpad.
