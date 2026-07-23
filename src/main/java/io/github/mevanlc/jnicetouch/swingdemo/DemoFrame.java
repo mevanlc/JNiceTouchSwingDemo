@@ -77,7 +77,7 @@ final class DemoFrame extends JFrame {
     private final JButton genericHaptic = new JButton("Generic");
     private final JButton alignmentHaptic = new JButton("Alignment");
     private final JButton levelHaptic = new JButton("Level change");
-    private final JToggleButton scrollMapping = new JToggleButton("Mapping A · reversed", true);
+    private final JButton scrollMapping = new JButton(gestureState.scrollMapping().buttonText());
     private final JButton openImage = new JButton("Open image…");
     private final JMenuItem clearImageMenu = new JMenuItem("Clear Image");
     private final Timer droppedTimer;
@@ -221,11 +221,11 @@ final class DemoFrame extends JFrame {
         reset.addActionListener(event -> gestureCanvas.resetView());
         scrollMapping.setName("Playground scroll mapping");
         scrollMapping.setToolTipText(
-                "Switch immediately between reversed and raw AppKit scroll deltas");
+                "Cycle Pixelmator, reversed, and raw AppKit scroll mappings");
         scrollMapping.addActionListener(event -> {
-            boolean reversed = scrollMapping.isSelected();
-            gestureState.setReverseScrollDeltas(reversed);
-            scrollMapping.setText(reversed ? "Mapping A · reversed" : "Mapping B · raw");
+            ScrollMapping mapping = gestureState.scrollMapping().next();
+            gestureState.setScrollMapping(mapping);
+            scrollMapping.setText(mapping.buttonText());
             gestureCanvas.repaint();
         });
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
@@ -400,7 +400,7 @@ final class DemoFrame extends JFrame {
         file.add(close);
 
         JMenu view = new JMenu("View");
-        JMenuItem toggleMapping = new JMenuItem("Toggle Scroll Mapping");
+        JMenuItem toggleMapping = new JMenuItem("Cycle Scroll Mapping");
         toggleMapping.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, shortcut));
         toggleMapping.addActionListener(event -> scrollMapping.doClick());
         JMenuItem reset = new JMenuItem("Reset Playground");

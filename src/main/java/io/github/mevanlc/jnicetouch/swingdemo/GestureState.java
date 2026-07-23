@@ -23,7 +23,7 @@ final class GestureState {
     private double lastSwipeX;
     private double lastSwipeY;
     private int quickLookGeneration;
-    private boolean reverseScrollDeltas = true;
+    private ScrollMapping scrollMapping = ScrollMapping.PIXELMATOR;
     private double lastRawScrollX;
     private double lastRawScrollY;
     private double lastScreenScrollX;
@@ -59,9 +59,8 @@ final class GestureState {
     }
 
     private void applyScroll(MacTrackpadEvent event) {
-        double mapping = reverseScrollDeltas ? -1.0 : 1.0;
-        double stateDeltaX = mapping * event.deltaX();
-        double stateDeltaY = mapping * event.deltaY();
+        double stateDeltaX = scrollMapping.stateDeltaX(event.deltaX());
+        double stateDeltaY = scrollMapping.stateDeltaY(event.deltaY());
         panBy(stateDeltaX, stateDeltaY);
         lastRawScrollX = event.deltaX();
         lastRawScrollY = event.deltaY();
@@ -70,8 +69,8 @@ final class GestureState {
         hasScrollSample = true;
     }
 
-    void setReverseScrollDeltas(boolean reverseScrollDeltas) {
-        this.reverseScrollDeltas = reverseScrollDeltas;
+    void setScrollMapping(ScrollMapping scrollMapping) {
+        this.scrollMapping = scrollMapping;
     }
 
     void panBy(double deltaX, double deltaY) {
@@ -163,8 +162,8 @@ final class GestureState {
         return quickLookGeneration;
     }
 
-    boolean reverseScrollDeltas() {
-        return reverseScrollDeltas;
+    ScrollMapping scrollMapping() {
+        return scrollMapping;
     }
 
     boolean hasScrollSample() {

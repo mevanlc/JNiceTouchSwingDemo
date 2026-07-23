@@ -21,7 +21,7 @@ public class GestureStateTest {
                 EventKind.ROTATE, 0, 0, 0, 37.5, 0, 0, 0,
                 Set.of(), Set.of(), Set.of(), 23));
 
-        assertEquals(state.panX(), -14.5);
+        assertEquals(state.panX(), 14.5);
         assertEquals(state.panY(), 8.25);
         assertEquals(state.scale(), 1.5);
         assertEquals(state.rotationDegrees(), 37.5);
@@ -37,18 +37,19 @@ public class GestureStateTest {
                 EventKind.SCROLL, -19.0, 11.5, 0, 0, 0, 0, 0,
                 Set.of(), Set.of(), Set.of(), 26));
 
-        assertEquals(state.panX(), 19.0);
+        assertEquals(state.panX(), -19.0);
         assertEquals(state.panY(), -11.5);
         assertEquals(state.lastRawScrollX(), -19.0);
         assertEquals(state.lastRawScrollY(), 11.5);
-        assertEquals(state.lastScreenScrollX(), 19.0);
+        assertEquals(state.lastScreenScrollX(), -19.0);
         assertEquals(state.lastScreenScrollY(), 11.5);
+        assertEquals(state.scrollMapping(), ScrollMapping.PIXELMATOR);
     }
 
     @Test
     public void switchesToRawScrollMappingForImmediateComparison() {
         GestureState state = new GestureState();
-        state.setReverseScrollDeltas(false);
+        state.setScrollMapping(ScrollMapping.RAW);
 
         state.apply(TestEvents.event(
                 EventKind.SCROLL, -19.0, 11.5, 0, 0, 0, 0, 0,
@@ -58,6 +59,36 @@ public class GestureStateTest {
         assertEquals(state.panY(), 11.5);
         assertEquals(state.lastScreenScrollX(), -19.0);
         assertEquals(state.lastScreenScrollY(), -11.5);
+    }
+
+    @Test
+    public void retainsTheBothAxesReversedDiagnosticMapping() {
+        GestureState state = new GestureState();
+        state.setScrollMapping(ScrollMapping.REVERSED);
+
+        state.apply(TestEvents.event(
+                EventKind.SCROLL, -19.0, 11.5, 0, 0, 0, 0, 0,
+                Set.of(), Set.of(), Set.of(), 28));
+
+        assertEquals(state.panX(), 19.0);
+        assertEquals(state.panY(), -11.5);
+        assertEquals(state.lastScreenScrollX(), 19.0);
+        assertEquals(state.lastScreenScrollY(), 11.5);
+    }
+
+    @Test
+    public void switchingMappingsPreservesTheCurrentTransform() {
+        GestureState state = new GestureState();
+        state.panBy(25.0, -40.0);
+        state.scaleBy(1.5);
+        state.rotateBy(17.0);
+
+        state.setScrollMapping(ScrollMapping.REVERSED);
+
+        assertEquals(state.panX(), 25.0);
+        assertEquals(state.panY(), -40.0);
+        assertEquals(state.scale(), 1.5);
+        assertEquals(state.rotationDegrees(), 17.0);
     }
 
     @Test

@@ -220,15 +220,14 @@ final class GestureCanvas extends JComponent {
             g.drawString(sequence, 18, 24);
             if (state.lastKind() == io.github.mevanlc.jnicetouch.EventKind.SCROLL
                     && state.hasScrollSample()) {
-                String mapping = state.reverseScrollDeltas() ? "A · reversed" : "B · raw";
                 String deltas = String.format(
                         Locale.ROOT,
-                        "raw Δ %+.2f, %+.2f  →  screen Δ %+.2f, %+.2f  ·  mapping %s",
+                        "AppKit Δ %+.2f, %+.2f  →  screen Δ %+.2f, %+.2f  ·  mapping %s",
                         state.lastRawScrollX(),
                         state.lastRawScrollY(),
                         state.lastScreenScrollX(),
                         state.lastScreenScrollY(),
-                        mapping);
+                        state.scrollMapping().shortText());
                 g.setColor(DemoTheme.TEXT_MUTED);
                 g.drawString(deltas, 18, 44);
             }
