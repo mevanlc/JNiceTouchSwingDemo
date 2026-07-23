@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="shell" x1="146" y1="98" x2="878" y2="926" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2c4055"/>
+      <stop offset="0.52" stop-color="#1d313d"/>
+      <stop offset="1" stop-color="#15372f"/>
+    </linearGradient>
+    <linearGradient id="surface" x1="281" y1="294" x2="748" y2="770" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#304b63"/>
+      <stop offset="0.56" stop-color="#263f4d"/>
+      <stop offset="1" stop-color="#1d403a"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="301" y1="240" x2="737" y2="816" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#89a9c2" stop-opacity="0.72"/>
+      <stop offset="0.48" stop-color="#66869c" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#71d9cd" stop-opacity="0.66"/>
+    </linearGradient>
+    <radialGradient id="touch" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#f5fffd"/>
+      <stop offset="0.38" stop-color="#a7f0e8"/>
+      <stop offset="1" stop-color="#59cfc3"/>
+    </radialGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="26" stdDeviation="24" flood-color="#05090d" flood-opacity="0.52"/>
+    </filter>
+    <filter id="contactGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+  </defs>
+
+  <!-- Transparent breathing room lets macOS retain the intended squircle silhouette. -->
+  <rect x="58" y="42" width="908" height="940" rx="222" fill="#081017" opacity="0.58" filter="url(#shadow)"/>
+  <rect x="58" y="34" width="908" height="940" rx="222" fill="url(#shell)"/>
+  <rect x="73" y="49" width="878" height="910" rx="207" fill="none" stroke="#9ab2c3" stroke-opacity="0.24" stroke-width="5"/>
+  <path d="M140 270C179 139 292 88 430 75h330c77 0 137 31 169 86-61-67-150-75-261-75H403c-119 7-204 55-263 184Z"
+        fill="#ffffff" opacity="0.07"/>
+
+  <!-- A dimensional trackpad, large enough to remain recognizable in Finder at 16 px. -->
+  <rect x="164" y="220" width="696" height="616" rx="162" fill="#0a1119" opacity="0.72"/>
+  <rect x="176" y="208" width="672" height="616" rx="154" fill="url(#edge)"/>
+  <rect x="190" y="222" width="644" height="588" rx="141" fill="url(#surface)"/>
+  <path d="M231 690c73 49 164 72 281 72s208-23 281-72" fill="none" stroke="#0a141b" stroke-opacity="0.42" stroke-width="9" stroke-linecap="round"/>
+  <path d="M250 277c71-31 158-45 262-45s191 14 262 45" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Diagonal fingertip contacts and opposing arrows read as rotation, not a face. -->
+  <path d="M314 574c-43-151 62-278 219-287 65-4 124 13 174 50" fill="none" stroke="#7db8e0" stroke-width="31" stroke-linecap="round"/>
+  <path d="m681 307 72 70-96 20Z" fill="#7db8e0"/>
+  <path d="M712 467c31 157-87 271-247 256-64-6-118-29-162-68" fill="none" stroke="#6bddd1" stroke-width="31" stroke-linecap="round"/>
+  <path d="m327 620-75 62 94 31Z" fill="#6bddd1"/>
+
+  <rect x="379" y="451" width="106" height="176" rx="53" fill="#65d8cc" opacity="0.22" filter="url(#contactGlow)" transform="rotate(-18 432 539)"/>
+  <rect x="535" y="345" width="106" height="176" rx="53" fill="#65d8cc" opacity="0.22" filter="url(#contactGlow)" transform="rotate(-18 588 433)"/>
+  <rect x="386" y="458" width="92" height="162" rx="46" fill="#102129" stroke="#b9f7f0" stroke-opacity="0.5" stroke-width="6" transform="rotate(-18 432 539)"/>
+  <rect x="396" y="468" width="72" height="142" rx="36" fill="url(#touch)" transform="rotate(-18 432 539)"/>
+  <rect x="542" y="352" width="92" height="162" rx="46" fill="#102129" stroke="#b9f7f0" stroke-opacity="0.5" stroke-width="6" transform="rotate(-18 588 433)"/>
+  <rect x="552" y="362" width="72" height="142" rx="36" fill="url(#touch)" transform="rotate(-18 588 433)"/>
+  <ellipse cx="416" cy="486" rx="10" ry="15" fill="#ffffff" opacity="0.76" transform="rotate(-18 416 486)"/>
+  <ellipse cx="572" cy="380" rx="10" ry="15" fill="#ffffff" opacity="0.76" transform="rotate(-18 572 380)"/>
+</svg>

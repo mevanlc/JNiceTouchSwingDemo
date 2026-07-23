@@ -78,6 +78,7 @@ final class DemoFrame extends JFrame {
 
     DemoFrame() {
         super("JNiceTouch Swing Demo");
+        AppIcon.install(this);
         setName("JNiceTouch Swing Demo");
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         setMinimumSize(new Dimension(980, 680));

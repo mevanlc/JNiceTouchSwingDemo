@@ -19,6 +19,7 @@ The demo deliberately shows both sides of trackpad integration:
 - macOS 12 or newer
 - JDK 22 or newer for development
 - Xcode Command Line Tools
+- `rsvg-convert` and `makeicns` for regenerating the shared application icon
 - the sibling checkout layout requested for this source example:
 
 ```text
@@ -43,6 +44,7 @@ VM-option setup is required when launching through Gradle.
 
 ```text
 ./gradlew test
+./gradlew makeAppIconIcns
 ./gradlew packageMacApp
 ./gradlew macDeployToApplications
 ```
@@ -52,6 +54,11 @@ plugin to create a self-contained
 `build/jpackage-output/JNiceTouch Swing Demo.app`. The deployment task installs
 that bundle at `/Applications/JNiceTouch Swing Demo.app` with the required FFM
 native-access option embedded in its launcher configuration.
+
+The checked-in `appicon.svg` is the single icon source. Gradle renders it to
+`appicon.png` for Swing windows and the Dock, then runs `makeicns` to create
+`appicon.icns` for `jpackage`. Both generated assets can be refreshed with
+`./gradlew makeAppIconIcns`.
 
 ## Interaction guide
 

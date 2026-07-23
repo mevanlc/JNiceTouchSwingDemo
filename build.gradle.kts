@@ -49,6 +49,41 @@ val jpackageInput = layout.buildDirectory.dir("jpackage-input")
 val jpackageOutput = layout.buildDirectory.dir("jpackage-output")
 val appBundle = jpackageOutput.map { it.dir("JNiceTouch Swing Demo.app") }
 val installedAppBundle = file("/Applications/JNiceTouch Swing Demo.app")
+val appIconSvg = layout.projectDirectory.file("appicon.svg")
+val appIconPng = layout.projectDirectory.file("appicon.png")
+val appIconIcns = layout.projectDirectory.file("appicon.icns")
+
+val renderAppIconPng by tasks.registering(Exec::class) {
+    group = "build"
+    description = "Renders the shared SVG as the high-resolution Swing icon."
+    inputs.file(appIconSvg)
+    outputs.file(appIconPng)
+    commandLine(
+        "rsvg-convert",
+        "--width", "1024",
+        "--height", "1024",
+        "--output", appIconPng.asFile.absolutePath,
+        appIconSvg.asFile.absolutePath,
+    )
+}
+
+val makeAppIconIcns by tasks.registering(Exec::class) {
+    group = "build"
+    description = "Builds the macOS ICNS from the shared high-resolution PNG."
+    dependsOn(renderAppIconPng)
+    inputs.file(appIconPng)
+    outputs.file(appIconIcns)
+    commandLine(
+        "makeicns",
+        "-in", appIconPng.asFile.absolutePath,
+        "-out", appIconIcns.asFile.absolutePath,
+    )
+}
+
+tasks.named<ProcessResources>("processResources") {
+    dependsOn(renderAppIconPng)
+    from(appIconPng)
+}
 
 val prepareJpackageInput by tasks.registering(Sync::class) {
     dependsOn(tasks.named("jar"))
@@ -58,7 +93,7 @@ val prepareJpackageInput by tasks.registering(Sync::class) {
 }
 
 tasks.jpackage {
-    dependsOn(prepareJpackageInput)
+    dependsOn(prepareJpackageInput, makeAppIconIcns)
     input = jpackageInput
     destination = jpackageOutput
     type = ImageType.APP_IMAGE
@@ -69,6 +104,7 @@ tasks.jpackage {
     copyright = "Copyright 2026 mevanlc"
     mainJar = "jnicetouch-swing-demo-${project.version}.jar"
     mainClass = application.mainClass.get()
+    icon = appIconIcns
     javaOptions = application.applicationDefaultJvmArgs
     mac {
         macPackageIdentifier = "io.github.mevanlc.jnicetouch.swingdemo"
