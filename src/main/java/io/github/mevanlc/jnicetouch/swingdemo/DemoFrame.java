@@ -6,6 +6,7 @@ import io.github.mevanlc.jnicetouch.HapticPerformanceTime;
 import io.github.mevanlc.jnicetouch.JNiceTouch;
 import io.github.mevanlc.jnicetouch.MacTrackpadEvent;
 import io.github.mevanlc.jnicetouch.MacTrackpadProvider;
+import io.github.mevanlc.jnicetouch.ScrollDeltaMapping;
 import io.github.mevanlc.jnicetouch.Subscription;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -77,7 +78,8 @@ final class DemoFrame extends JFrame {
     private final JButton genericHaptic = new JButton("Generic");
     private final JButton alignmentHaptic = new JButton("Alignment");
     private final JButton levelHaptic = new JButton("Level change");
-    private final JButton scrollMapping = new JButton(gestureState.scrollMapping().buttonText());
+    private final JButton scrollMapping =
+            new JButton(ScrollMappingUi.buttonText(gestureState.scrollMapping()));
     private final JButton openImage = new JButton("Open image…");
     private final JMenuItem clearImageMenu = new JMenuItem("Clear Image");
     private final Timer droppedTimer;
@@ -221,11 +223,11 @@ final class DemoFrame extends JFrame {
         reset.addActionListener(event -> gestureCanvas.resetView());
         scrollMapping.setName("Playground scroll mapping");
         scrollMapping.setToolTipText(
-                "Cycle Pixelmator, reversed, and raw AppKit scroll mappings");
+                "Cycle Canvas, reversed, and raw AppKit scroll mappings");
         scrollMapping.addActionListener(event -> {
-            ScrollMapping mapping = gestureState.scrollMapping().next();
+            ScrollDeltaMapping mapping = ScrollMappingUi.next(gestureState.scrollMapping());
             gestureState.setScrollMapping(mapping);
-            scrollMapping.setText(mapping.buttonText());
+            scrollMapping.setText(ScrollMappingUi.buttonText(mapping));
             gestureCanvas.repaint();
         });
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));

@@ -71,9 +71,11 @@ changes the force ring, and Quick Look briefly raises an overlay. The exact
 initial target is shown and remains pinned through the gesture and scroll
 momentum.
 
-The playground starts with mapping C, which matches Pixelmator Pro: horizontal
-AppKit deltas are applied directly and vertical deltas are reversed internally,
-so screen movement follows the preference-adjusted AppKit delta on both axes.
+The playground starts in Canvas mode (mapping C): horizontal AppKit deltas are
+applied directly and vertical deltas are reversed internally, so screen movement
+follows the preference-adjusted AppKit delta on both axes. It uses the library's
+`ScrollDeltaMapping.CANVAS` helper rather than implementing the sign translation
+locally.
 Click the mapping button or press Command-R to cycle C → A (both reversed) → B
 (both raw) for comparison. Switching mappings preserves the current pan, zoom,
 and rotation. The sample canvas shows each AppKit scroll vector beside the

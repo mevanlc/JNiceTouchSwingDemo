@@ -3,6 +3,7 @@ package io.github.mevanlc.jnicetouch.swingdemo;
 import static org.testng.Assert.assertEquals;
 
 import io.github.mevanlc.jnicetouch.EventKind;
+import io.github.mevanlc.jnicetouch.ScrollDeltaMapping;
 import java.util.Set;
 import org.testng.annotations.Test;
 
@@ -43,13 +44,13 @@ public class GestureStateTest {
         assertEquals(state.lastRawScrollY(), 11.5);
         assertEquals(state.lastScreenScrollX(), -19.0);
         assertEquals(state.lastScreenScrollY(), 11.5);
-        assertEquals(state.scrollMapping(), ScrollMapping.PIXELMATOR);
+        assertEquals(state.scrollMapping(), ScrollDeltaMapping.CANVAS);
     }
 
     @Test
     public void switchesToRawScrollMappingForImmediateComparison() {
         GestureState state = new GestureState();
-        state.setScrollMapping(ScrollMapping.RAW);
+        state.setScrollMapping(ScrollDeltaMapping.RAW_APPKIT);
 
         state.apply(TestEvents.event(
                 EventKind.SCROLL, -19.0, 11.5, 0, 0, 0, 0, 0,
@@ -64,7 +65,7 @@ public class GestureStateTest {
     @Test
     public void retainsTheBothAxesReversedDiagnosticMapping() {
         GestureState state = new GestureState();
-        state.setScrollMapping(ScrollMapping.REVERSED);
+        state.setScrollMapping(ScrollDeltaMapping.REVERSED);
 
         state.apply(TestEvents.event(
                 EventKind.SCROLL, -19.0, 11.5, 0, 0, 0, 0, 0,
@@ -83,7 +84,7 @@ public class GestureStateTest {
         state.scaleBy(1.5);
         state.rotateBy(17.0);
 
-        state.setScrollMapping(ScrollMapping.REVERSED);
+        state.setScrollMapping(ScrollDeltaMapping.REVERSED);
 
         assertEquals(state.panX(), 25.0);
         assertEquals(state.panY(), -40.0);

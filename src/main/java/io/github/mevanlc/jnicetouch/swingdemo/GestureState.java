@@ -2,6 +2,8 @@ package io.github.mevanlc.jnicetouch.swingdemo;
 
 import io.github.mevanlc.jnicetouch.EventKind;
 import io.github.mevanlc.jnicetouch.MacTrackpadEvent;
+import io.github.mevanlc.jnicetouch.ScrollDelta;
+import io.github.mevanlc.jnicetouch.ScrollDeltaMapping;
 
 final class GestureState {
     static final double MIN_SCALE = 0.45;
@@ -23,7 +25,7 @@ final class GestureState {
     private double lastSwipeX;
     private double lastSwipeY;
     private int quickLookGeneration;
-    private ScrollMapping scrollMapping = ScrollMapping.PIXELMATOR;
+    private ScrollDeltaMapping scrollMapping = ScrollDeltaMapping.CANVAS;
     private double lastRawScrollX;
     private double lastRawScrollY;
     private double lastScreenScrollX;
@@ -59,17 +61,16 @@ final class GestureState {
     }
 
     private void applyScroll(MacTrackpadEvent event) {
-        double stateDeltaX = scrollMapping.stateDeltaX(event.deltaX());
-        double stateDeltaY = scrollMapping.stateDeltaY(event.deltaY());
-        panBy(stateDeltaX, stateDeltaY);
+        ScrollDelta stateDelta = scrollMapping.map(event.deltaX(), event.deltaY());
+        panBy(stateDelta.x(), stateDelta.y());
         lastRawScrollX = event.deltaX();
         lastRawScrollY = event.deltaY();
-        lastScreenScrollX = stateDeltaX;
-        lastScreenScrollY = -stateDeltaY;
+        lastScreenScrollX = stateDelta.x();
+        lastScreenScrollY = -stateDelta.y();
         hasScrollSample = true;
     }
 
-    void setScrollMapping(ScrollMapping scrollMapping) {
+    void setScrollMapping(ScrollDeltaMapping scrollMapping) {
         this.scrollMapping = scrollMapping;
     }
 
@@ -162,7 +163,7 @@ final class GestureState {
         return quickLookGeneration;
     }
 
-    ScrollMapping scrollMapping() {
+    ScrollDeltaMapping scrollMapping() {
         return scrollMapping;
     }
 

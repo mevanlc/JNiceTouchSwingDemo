@@ -227,7 +227,7 @@ final class GestureCanvas extends JComponent {
                         state.lastRawScrollY(),
                         state.lastScreenScrollX(),
                         state.lastScreenScrollY(),
-                        state.scrollMapping().shortText());
+                        ScrollMappingUi.shortText(state.scrollMapping()));
                 g.setColor(DemoTheme.TEXT_MUTED);
                 g.drawString(deltas, 18, 44);
             }
